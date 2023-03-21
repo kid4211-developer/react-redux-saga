@@ -5,15 +5,22 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { applyMiddleware, createStore } from "redux";
 import { composeWithDevTools } from "redux-devtools-extension";
-import rootReducer from "./modules";
+import rootReducer, { rootSaga } from "./modules";
 import { Provider } from "react-redux";
 import logger from "redux-logger";
 import ReduxThunk from "redux-thunk";
 import { BrowserRouter } from "react-router-dom";
 import { createBrowserHistory } from "history";
+import createSagaMiddleware from "redux-saga";
 
 // thunk 에서 router history 객체를 사용하려면, BrowserHistory instance 를 직접 만들어서 적용해야 한다.
 const customHistory = createBrowserHistory();
+
+const sagaMiddleware = createSagaMiddleware({
+  context: {
+    history: customHistory,
+  },
+});
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 /**
@@ -24,10 +31,16 @@ const store = createStore(
   composeWithDevTools(
     applyMiddleware(
       logger,
-      ReduxThunk.withExtraArgument({ history: customHistory })
+      ReduxThunk.withExtraArgument({ history: customHistory }),
+      sagaMiddleware
     )
   )
 );
+
+/**
+ * rootSaga 를 실행시켜준다. -> 반드시 store 생성된 다음에 실행코드를 작성해야 한다.
+ */
+sagaMiddleware.run(rootSaga);
 
 root.render(
   <React.StrictMode>

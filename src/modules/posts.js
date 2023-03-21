@@ -1,7 +1,8 @@
+import { takeEvery } from "redux-saga/effects";
 import * as postsAPI from "../api/posts"; // api/posts 안의 함수 모두 불러오기
 import {
-  createPromiseThunk,
-  createPromiseThunkById,
+  createPromiseSaga,
+  createPromiseSagaById,
   handleAsyncActions,
   handleAsyncActionsById,
   reducerUtils,
@@ -19,13 +20,32 @@ const GET_POST = "GET_POST";
 const GET_POST_SUCCESS = "GET_POST_SUCCESS";
 const GET_POST_ERROR = "GET_POST_ERROR";
 
-// 아주 쉽게 thunk 함수를 만들 수 있게 되었습니다.
-export const getPosts = createPromiseThunk(GET_POSTS, postsAPI.getPosts);
-export const getPost = createPromiseThunkById(GET_POST, postsAPI.getPostById);
+const GO_TO_HOME = "GO_TO_HOME";
 
-export const goToHomePage = (navigate) => (dispatch, getState) => {
-  navigate("/");
-};
+export const getPosts = () => ({ type: GET_POSTS });
+
+// payload는 파라미터 용도, meta는 리듀서에서 id를 알기위한 용도
+export const getPost = (id) => ({ type: GET_POST, payload: id, meta: id });
+
+/**
+ * @param navigate router v6 부터는 history 객체를 사용하지 않는다. 액션 함수를 dispatch 해주는 곳에서 navigate 함수를 받아서 routing 처리를 해준다.
+ * @returns
+ */
+export const goToHomePage = (navigate) => ({ type: GO_TO_HOME, navigate });
+
+function* goToHomeSaga(action) {
+  yield action.navigate("/");
+}
+
+const getPostsSaga = createPromiseSaga(GET_POSTS, postsAPI.getPosts);
+const getPostSaga = createPromiseSagaById(GET_POST, postsAPI.getPostById);
+
+// 사가들을 합치기
+export function* postsSaga() {
+  yield takeEvery(GET_POSTS, getPostsSaga);
+  yield takeEvery(GET_POST, getPostSaga);
+  yield takeEvery(GO_TO_HOME, goToHomeSaga);
+}
 
 // initialState 쪽도 반복되는 코드를 initial() 함수를 사용해서 리팩토링 했습니다.
 const initialState = {
