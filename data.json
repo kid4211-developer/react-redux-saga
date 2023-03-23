@@ -1,4 +1,5 @@
 {
+  "_comment": "npx json-server ./data.json --port 4000",
   "posts": [
     {
       "id": 1,
